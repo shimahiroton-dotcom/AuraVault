@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AuraVault" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>AuraVault — わが家の保険・資産ポートフォリオ</title>
+
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --bg-gradient: radial-gradient(circle at 15% 0%, #172554 0%, #0b1120 48%, #070b14 100%);
+      --surface: rgba(30, 41, 59, 0.65);
+      --surface-solid: #151e32;
+      --surface-elevated: rgba(51, 65, 85, 0.45);
+      --border: rgba(148, 163, 184, 0.16);
+      --border-gold: rgba(212, 175, 55, 0.35);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #e2b857;
+      --gold-soft: rgba(226, 184, 87, 0.15);
+      --emerald: #34d399;
+      --emerald-soft: rgba(52, 211, 153, 0.15);
+      --sky: #38bdf8;
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.15);
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text);
+      line-height: 1.55;
+      padding-bottom: 96px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(11, 17, 32, 0.78);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 18px;
+    }
+
+    .header-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f3d078 0%, #b88928 100%);
+      color: #0b1120;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.03em;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 6px 18px rgba(226, 184, 87, 0.3);
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .sync-pill.active {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: var(--emerald-soft);
+      color: var(--emerald);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .sync-pill.active .dot {
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+    }
+
+    /* Hero Summary Card */
+    .hero-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.92) 100%);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(226, 184, 87, 0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .metric-box {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 13px 14px;
+    }
+
+    .metric-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-value.gold { color: var(--gold); }
+    .metric-value.emerald { color: var(--emerald); }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Ratio Bar */
+    .ratio-wrap {
+      margin-top: 14px;
+    }
+
+    .ratio-bar {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.15);
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+    }
+
+    .ratio-seg-ins { background: var(--gold); transition: width 0.4s ease; }
+    .ratio-seg-fix { background: var(--sky); transition: width 0.4s ease; }
+
+    .ratio-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border);
+      padding: 5px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 10px 8px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(226, 184, 87, 0.22), rgba(226, 184, 87, 0.08));
+      color: var(--gold);
+      border: 1px solid var(--border-gold);
+    }
+
+    /* Filter Chips */
+    .chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex: 0 0 auto;
+      padding: 6px 13px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    /* Cards List */
+    .card-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item-card {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .item-card:active {
+      transform: scale(0.99);
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    .badge-ins { background: var(--gold-soft); color: var(--gold); }
+    .badge-asset { background: var(--emerald-soft); color: var(--emerald); }
+    .badge-fix { background: rgba(56, 189, 248, 0.15); color: var(--sky); }
+    .badge-owner { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+    .badge-warn { background: var(--rose-soft); color: var(--rose); }
+
+    .item-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .item-company {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .item-amount {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .amount-main {
+      font-size: 17px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .amount-cycle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .item-meta {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      right: 20px;
+      bottom: 24px;
+      z-index: 35;
+      border: none;
+      border-radius: 999px;
+      padding: 15px 22px;
+      background: linear-gradient(135deg, #f3d078 0%, #c8962e 100%);
+      color: #0b1120;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 12px 28px rgba(226, 184, 87, 0.38);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(3, 7, 18, 0.78);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #11192c;
+      border: 1px solid var(--border);
+      border-top-left-radius: 26px;
+      border-top-right-radius: 26px;
+      padding: 22px 20px 34px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 13px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f3d078 0%, #c8962e 100%);
+      color: #0b1120;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-danger {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(251, 113, 133, 0.35);
+      border-radius: 14px;
+      background: var(--rose-soft);
+      color: var(--rose);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark">AV</div>
+      <div>
+        <div class="brand-title">AuraVault</div>
+        <div class="brand-sub" id="syncSubtitle">ローカル保存モード</div>
+      </div>
+    </div>
+    <button class="sync-pill" id="syncBtn" onclick="openSyncModal()">
+      <span class="dot"></span>
+      <span id="syncBtnText">夫婦同期</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- Summary Dashboard -->
+  <section class="hero-card">
+    <div class="hero-label">Household Portfolio Summary</div>
+    <div class="hero-grid">
+      <div class="metric-box">
+        <div class="metric-title">毎月の固定支出・保険合計</div>
+        <div class="metric-value gold" id="monthlyTotal">¥0</div>
+        <div class="metric-sub" id="yearlyTotal">年換算: ¥0</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-title">登録資産・積立評価額</div>
+        <div class="metric-value emerald" id="assetTotal">¥0</div>
+        <div class="metric-sub" id="itemCountSub">契約・口座 0件</div>
+      </div>
+    </div>
+    <div class="ratio-wrap">
+      <div class="ratio-bar">
+        <div class="ratio-seg-ins" id="barIns" style="width: 50%"></div>
+        <div class="ratio-seg-fix" id="barFix" style="width: 50%"></div>
+      </div>
+      <div class="ratio-legend">
+        <span id="legendIns">保険料: ¥0/月</span>
+        <span id="legendFix">固定費・住居: ¥0/月</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Category Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="all" onclick="switchTab('all', this)">すべて</button>
+    <button class="tab-btn" data-tab="insurance" onclick="switchTab('insurance', this)">保険証券</button>
+    <button class="tab-btn" data-tab="money" onclick="switchTab('money', this)">資産・固定費</button>
+  </div>
+
+  <!-- Owner Filter -->
+  <div class="chips" id="ownerChips">
+    <button class="chip active" onclick="filterOwner('all', this)">全員</button>
+    <button class="chip" onclick="filterOwner('夫', this)">夫</button>
+    <button class="chip" onclick="filterOwner('妻', this)">妻</button>
+    <button class="chip" onclick="filterOwner('家族・共有', this)">家族・共有</button>
+  </div>
+
+  <!-- List -->
+  <div class="card-list" id="cardList"></div>
+</main>
+
+<button class="fab" onclick="openItemModal()">＋ 項目を追加</button>
+
+<!-- Add / Edit Item Modal -->
+<div class="modal-backdrop" id="itemModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 class="modal-title" id="itemModalTitle">新しい項目を登録</h2>
+      <button class="close-btn" onclick="closeModal('itemModal')">✕</button>
+    </div>
+    <form id="itemForm" onsubmit="saveItem(event)">
+      <input type="hidden" id="editId" />
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>種別</label>
+          <select id="fCategory" required>
+            <option value="insurance">保険（生命・医療・火災等）</option>
+            <option value="asset">資産・口座・NISA</option>
+            <option value="fixed">固定費・住宅ローン</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>名義・対象</label>
+          <select id="fOwner">
+            <option value="夫">夫</option>
+            <option value="妻">妻</option>
+            <option value="家族・共有">家族・共有</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>名称（保険商品名・口座名・項目名）</label>
+        <input type="text" id="fTitle" placeholder="例：火災・地震保険 / 医療保険 / つみたてNISA" required />
+      </div>
+
+      <div class="form-group">
+        <label>会社名・金融機関</label>
+        <input type="text" id="fCompany" placeholder="例：東京海上日動 / SBI証券 / 楽天銀行" />
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>金額（円）</label>
+          <input type="number" id="fAmount" placeholder="例：12500" required />
+        </div>
+        <div class="form-group">
+          <label>区分・支払サイクル</label>
+          <select id="fCycle">
+            <option value="monthly">月額（毎月払い）</option>
+            <option value="yearly">年額（年払い）</option>
+            <option value="balance">現在残高・評価額</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label>証券番号・口座メモ</label>
+          <input type="text" id="fPolicyNo" placeholder="例：No. 1234-5678" />
+        </div>
+        <div class="form-group">
+          <label>満期日・更新日・見直し時期</label>
+          <input type="date" id="fRenewDate" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>保障内容・請求条件・夫婦メモ</label>
+        <textarea id="fNotes" rows="3" placeholder="例：入院日額1万円、水災補償あり。請求時はマイページから手続き可能。"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary">保存する</button>
+      <button type="button" class="btn-danger" id="deleteBtn" style="display:none;" onclick="deleteCurrentItem()">この項目を削除</button>
+    </form>
+  </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal-backdrop" id="syncModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h2 class="modal-title">夫婦リアルタイム同期</h2>
+      <button class="close-btn" onclick="closeModal('syncModal')">✕</button>
+    </div>
+
+    <div class="metric-box" style="margin-bottom: 14px;">
+      <div class="metric-title">接続ステータス</div>
+      <div style="font-weight:700; font-size:14px;" id="syncStatusDetail">未接続（この端末のみに保存）</div>
+    </div>
+
+    <div class="form-group">
+      <label>おうち合言葉（夫婦で同じ半角英数字を入力）</label>
+      <input type="text" id="syncRoomInput" placeholder="例：shima-vault-2026" />
+    </div>
+
+    <div class="form-group">
+      <label>Firebase Realtime Database URL</label>
+      <input type="text" id="syncDbUrl" value="https://homecare-cf866-default-rtdb.firebaseio.com" />
+    </div>
+
+    <button class="btn-primary" onclick="startSync()">自動同期を開始・保存</button>
+    <div class="row-2" style="margin-top:10px;">
+      <button class="btn-secondary" onclick="pushLocalToCloud()">端末データを送信</button>
+      <button class="btn-secondary" onclick="stopSync()">同期を解除</button>
+    </div>
+
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
+      <label>JSONバックアップ</label>
+      <div class="row-2">
+        <button class="btn-secondary" onclick="exportJson()">JSON書き出し</button>
+        <button class="btn-secondary" onclick="document.getElementById('importFile').click()">JSON読み込み</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJson(event)" />
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'auravault_items_v1';
+  const SYNC_KEY = 'auravault_sync_cfg_v1';
+
+  let items = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || [
+    {
+      id: 'sample-1',
+      category: 'insurance',
+      owner: '家族・共有',
+      title: '新築住宅 火災・地震保険（サンプル）',
+      company: '損保会社名を入力',
+      amount: 36000,
+      cycle: 'yearly',
+      policyNo: '証券番号メモ',
+      renewDate: '2031-11-01',
+      notes: 'タップして編集・削除できます。夫婦で同じ合言葉を設定すると自動同期されます。'
+    }
+  ];
+
+  let currentTab = 'all';
+  let currentOwner = 'all';
+  let dbRef = null;
+  let isRemoteUpdating = false;
+
+  function saveLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    render();
+    if (dbRef && !isRemoteUpdating) {
+      dbRef.set(items);
+    }
+  }
+
+  function formatYen(num) {
+    return '¥' + Math.round(Number(num) || 0).toLocaleString('ja-JP');
+  }
+
+  function render() {
+    let monthlyIns = 0;
+    let monthlyFix = 0;
+    let assetSum = 0;
+
+    items.forEach(item => {
+      const amt = Number(item.amount) || 0;
+      if (item.cycle === 'balance' || item.category === 'asset') {
+        assetSum += amt;
+      } else {
+        const m = item.cycle === 'yearly' ? amt / 12 : amt;
+        if (item.category === 'insurance') monthlyIns += m;
+        else monthlyFix += m;
+      }
+    });
+
+    const totalMonthly = monthlyIns + monthlyFix;
+    document.getElementById('monthlyTotal').textContent = formatYen(totalMonthly);
+    document.getElementById('yearlyTotal').textContent = '年換算: ' + formatYen(totalMonthly * 12);
+    document.getElementById('assetTotal').textContent = formatYen(assetSum);
+    document.getElementById('itemCountSub').textContent = `登録件数 ${items.length}件`;
+
+    const insPct = totalMonthly > 0 ? Math.round((monthlyIns / totalMonthly) * 100) : 50;
+    document.getElementById('barIns').style.width = insPct + '%';
+    document.getElementById('barFix').style.width = (100 - insPct) + '%';
+    document.getElementById('legendIns').textContent = `保険料: ${formatYen(monthlyIns)}/月`;
+    document.getElementById('legendFix').textContent = `固定費・住居: ${formatYen(monthlyFix)}/月`;
+
+    const filtered = items.filter(item => {
+      const tabOk = currentTab === 'all'
+        || (currentTab === 'insurance' && item.category === 'insurance')
+        || (currentTab === 'money' && item.category !== 'insurance');
+      const ownerOk = currentOwner === 'all' || item.owner === currentOwner;
+      return tabOk && ownerOk;
+    });
+
+    const listEl = document.getElementById('cardList');
+    if (!filtered.length) {
+      listEl.innerHTML = '<div class="empty-state">該当する項目がありません。<br>右下の「＋ 項目を追加」から登録できます。</div>';
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(item => {
+      const badgeClass = item.category === 'insurance' ? 'badge-ins' : (item.category === 'asset' ? 'badge-asset' : 'badge-fix');
+      const badgeLabel = item.category === 'insurance' ? '保険' : (item.category === 'asset' ? '資産・口座' : '固定費');
+      const cycleLabel = item.cycle === 'yearly' ? '年額' : (item.cycle === 'balance' ? '評価額・残高' : '月額');
+
+      let renewBadge = '';
+      if (item.renewDate) {
+        const diffDays = Math.ceil((new Date(item.renewDate) - new Date()) / 86400000);
+        if (diffDays >= 0 && diffDays <= 60) {
+          renewBadge = `<span class="badge badge-warn">あと${diffDays}日で更新</span>`;
+        }
+      }
+
+      return `
+        <div class="item-card" onclick="openItemModal('${item.id}')">
+          <div class="item-top">
+            <div>
+              <div class="badge-row">
+                <span class="badge ${badgeClass}">${badgeLabel}</span>
+                <span class="badge badge-owner">${escapeHtml(item.owner || '共有')}</span>
+                ${renewBadge}
+              </div>
+              <h3 class="item-title">${escapeHtml(item.title)}</h3>
+              <div class="item-company">${escapeHtml(item.company || '金融機関・保険会社未設定')}</div>
+            </div>
+            <div class="item-amount">
+              <div class="amount-main">${formatYen(item.amount)}</div>
+              <div class="amount-cycle">${cycleLabel}</div>
+            </div>
+          </div>
+          <div class="item-meta">
+            <span>${item.policyNo ? '番号: ' + escapeHtml(item.policyNo) : '番号未登録'}</span>
+            <span>${item.renewDate ? '満期・更新: ' + item.renewDate : ''}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, s => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[s]));
+  }
+
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function filterOwner(owner, btn) {
+    currentOwner = owner;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function openItemModal(id = null) {
+    const form = document.getElementById('itemForm');
+    form.reset();
+    document.getElementById('editId').value = id || '';
+    document.getElementById('deleteBtn').style.display = id ? 'block' : 'none';
+    document.getElementById('itemModalTitle').textContent = id ? '項目を編集' : '新しい項目を登録';
+
+    if (id) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        document.getElementById('fCategory').value = item.category;
+        document.getElementById('fOwner').value = item.owner;
+        document.getElementById('fTitle').value = item.title;
+        document.getElementById('fCompany').value = item.company || '';
+        document.getElementById('fAmount').value = item.amount;
+        document.getElementById('fCycle').value = item.cycle;
+        document.getElementById('fPolicyNo').value = item.policyNo || '';
+        document.getElementById('fRenewDate').value = item.renewDate || '';
+        document.getElementById('fNotes').value = item.notes || '';
+      }
+    }
+    document.getElementById('itemModal').classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function saveItem(e) {
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const data = {
+      id: id || 'item-' + Date.now(),
+      category: document.getElementById('fCategory').value,
+      owner: document.getElementById('fOwner').value,
+      title: document.getElementById('fTitle').value.trim(),
+      company: document.getElementById('fCompany').value.trim(),
+      amount: Number(document.getElementById('fAmount').value) || 0,
+      cycle: document.getElementById('fCycle').value,
+      policyNo: document.getElementById('fPolicyNo').value.trim(),
+      renewDate: document.getElementById('fRenewDate').value,
+      notes: document.getElementById('fNotes').value.trim()
+    };
+
+    if (id) {
+      items = items.map(i => i.id === id ? data : i);
+    } else {
+      items.unshift(data);
+    }
+    saveLocal();
+    closeModal('itemModal');
+  }
+
+  function deleteCurrentItem() {
+    const id = document.getElementById('editId').value;
+    if (!id || !confirm('この項目を削除しますか？')) return;
+    items = items.filter(i => i.id !== id);
+    saveLocal();
+    closeModal('itemModal');
+  }
+
+  /* Firebase Sync */
+  function openSyncModal() {
+    const cfg = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null');
+    if (cfg) {
+      document.getElementById('syncRoomInput').value = cfg.room || '';
+      document.getElementById('syncDbUrl').value = cfg.dbUrl || 'https://homecare-cf866-default-rtdb.firebaseio.com';
+    }
+    document.getElementById('syncModal').classList.add('open');
+  }
+
+  function connectFirebase(room, dbUrl) {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({ databaseURL: dbUrl });
+      }
+      const safeRoom = room.replace(/[^a-zA-Z0-9_-]/g, '_');
+      if (dbRef) dbRef.off();
+      dbRef = firebase.database().ref('auravault_rooms/' + safeRoom);
+
+      dbRef.on('value', snapshot => {
+        const val = snapshot.val();
+        if (Array.isArray(val)) {
+          isRemoteUpdating = true;
+          items = val;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+          render();
+          isRemoteUpdating = false;
+        }
+      });
+
+      document.getElementById('syncBtn').classList.add('active');
+      document.getElementById('syncBtnText').textContent = '同期中';
+      document.getElementById('syncSubtitle').textContent = `同期ルーム: ${room}`;
+      document.getElementById('syncStatusDetail').textContent = `接続中（ルームID: ${room}）`;
+    } catch (err) {
+      alert('同期の接続に失敗しました: ' + err.message);
+    }
+  }
+
+  function startSync() {
+    const room = document.getElementById('syncRoomInput').value.trim();
+    const dbUrl = document.getElementById('syncDbUrl').value.trim();
+    if (!room) {
+      alert('おうち合言葉を入力してください');
+      return;
+    }
+    localStorage.setItem(SYNC_KEY, JSON.stringify({ room, dbUrl }));
+    connectFirebase(room, dbUrl);
+    closeModal('syncModal');
+  }
+
+  function pushLocalToCloud() {
+    if (!dbRef) {
+      alert('先に「自動同期を開始・保存」を押してください');
+      return;
+    }
+    dbRef.set(items);
+    alert('この端末のデータをクラウドへ送信しました');
+  }
+
+  function stopSync() {
+    if (dbRef) dbRef.off();
+    dbRef = null;
+    localStorage.removeItem(SYNC_KEY);
+    document.getElementById('syncBtn').classList.remove('active');
+    document.getElementById('syncBtnText').textContent = '夫婦同期';
+    document.getElementById('syncSubtitle').textContent = 'ローカル保存モード';
+    document.getElementById('syncStatusDetail').textContent = '未接続（この端末のみに保存）';
+    closeModal('syncModal');
+  }
+
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'auravault-backup.json';
+    a.click();
+  }
+
+  function importJson(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (Array.isArray(parsed)) {
+          items = parsed;
+          saveLocal();
+          alert('バックアップを読み込みました');
+        }
+      } catch {
+        alert('JSONファイルの形式が正しくありません');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Init
+  render();
+  const savedSync = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null');
+  if (savedSync && savedSync.room && savedSync.dbUrl) {
+    connectFirebase(savedSync.room, savedSync.dbUrl);
+  }
+</script>
+</body>
+</html>
